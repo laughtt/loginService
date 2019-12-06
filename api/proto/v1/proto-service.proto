@@ -1,0 +1,91 @@
+syntax = "proto3";
+package v1;
+import "google/protobuf/timestamp.proto";
+
+message Data {
+    int64 id = 1;
+
+    string email = 2;
+
+    string password = 3;
+
+    google.protobuf.Timestamp reminder = 4;
+}
+
+message CreateRequest {
+
+    string api  = 1;
+
+    Data data = 2;
+
+}
+
+message CreateResponse{
+    
+    string api = 1;
+
+    bool success = 2;
+    
+    string error = 3;
+
+}
+
+message LoginRequest {
+
+    string api  = 1;
+
+    Data data = 2;
+
+}
+
+message LoginResponse {
+
+    string api = 1;
+
+    bool success = 2;
+    
+    string error = 3;
+}
+
+message ChangePasswordRequest{
+
+    string api = 1;
+
+    string account = 2;
+
+    string newPassword = 3;
+
+}
+
+message ChangePasswordResponse{
+    string api = 1;
+    
+    bool success = 2;
+
+    string error = 3;
+}
+
+message EraseAccountRequest{
+
+    string api = 1;
+
+    Data data = 2;
+
+}
+
+message EraseAccountResponse {
+
+    string api = 1;
+
+    bool success = 2;
+
+    string error = 3;
+
+}
+
+service authService {
+    rpc CreateAccount (CreateRequest) returns (CreateResponse);
+    rpc LoginAccount (LoginRequest) returns (LoginResponse);
+    rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse);
+    rpc EraseAccount (EraseAccountRequest) returns (EraseAccountResponse);
+}
