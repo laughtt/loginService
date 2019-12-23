@@ -15,11 +15,11 @@ const (
 )
 const (
 	database   = "service"
-	name       = "sql"
+	name       = "db"
 	host       = "localhost"
 	apiVersion = "v1"
 	password   = "123"
-	port       = "5505"
+	port       = "5100"
 	username   = "root"
 )
 

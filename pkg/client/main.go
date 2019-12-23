@@ -40,11 +40,43 @@ func main() {
 		Api: apiVer,
 		Data: &v1.Data{
 			Id: 1,
-			Email: "jcarpioherrerr22@gmail.com",
-			Password: "1235",
+			Email: "jcarpioherrerr241251@gmail.com",
+			Password: "123561",
 			Reminder: reminder,
 		},
 	}
 	res1 , err := c.CreateAccount(ctx , req1)
 	fmt.Println(res1 , err)
+	req2 := &v1.ChangePasswordRequest{
+		Api: apiVer,
+		Account: "jcarpioherrerr241251@gmail.com",
+		NewPassword: "1235611",
+	}
+
+	res2 , err := c.ChangePassword(ctx, req2)
+	fmt.Println(res2 , err ,"exe")
+
+	req3 := &v1.LoginRequest{
+		Api: apiVer,
+		Data: &v1.Data{
+			Id:2,
+			Email:"jcarpioherrerr241251@gmail.com",
+			Password:"123561",
+			Reminder:reminder,
+		},
+	}
+	res3 , err := c.LoginAccount(ctx,req3)
+	fmt.Println(res3, err)
+
+	req4 := &v1.EraseAccountRequest{
+		Api: apiVer,
+		Data: &v1.Data{
+			Id: 4,
+			Email: "jcarpioherrerr2411@gmail.com",
+			Password: "1235611",
+			Reminder: reminder,
+		},
+	}
+	res4 , err := c.EraseAccount(ctx,req4)
+	fmt.Println(res4,err)
 }

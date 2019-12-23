@@ -1,0 +1,35 @@
+version: '3.6'
+
+services:
+  loginservice:
+    build: .
+    image: login:v1
+    restart: always
+    container_name: loginservice
+    ports: 
+      - "8080:80"
+    depends_on: 
+      - db
+    networks: 
+      backend:
+  db:
+    image: mysql
+    restart: always
+    volumes:
+      - my-sqldata:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_USER=db
+      - MYSQL_PASSWORD=123
+      - MYSQL_DATABASE=service
+    container_name: db
+    networks:
+      backend:
+
+volumes:
+  my-sqldata:
+    name: mysql
+networks:
+  backend:
+

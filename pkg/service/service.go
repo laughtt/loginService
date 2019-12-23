@@ -53,38 +53,6 @@ func (s *AuthServiceServer) checkAPI(api string) error {
 }
 
 
-// func Transact(db *sql.DB, txFunc func(*sql.Tx) error) (err error) {
-//     tx, err := db.Begin()
-//     if err != nil {
-//         return
-//     }
-//     defer func() {
-//         if p := recover(); p != nil {
-//             tx.Rollback()
-//             panic(p) // re-throw panic after Rollback
-//         } else if err != nil {
-//             tx.Rollback() // err is non-nil; don't change it
-//         } else {
-//             err = tx.Commit() // err is nil; if Commit returns error update err
-//         }
-//     }()
-//     err = txFunc(tx)
-// 	return err
-// 
-// }
-
-// func (s Service) DoSomething() error {
-//     return Transact(s.db, func (tx *sql.Tx) error {
-//         if _, err := tx.Exec(...); err != nil {
-//             return err
-//         }
-//         if _, err := tx.Exec(...); err != nil {
-//             return err
-//         }
-//         return nil
-//     })
-// }
-
 //Connect database
 func (s *AuthServiceServer) connect(ctx context.Context) (*sql.Conn, error) {
 	c, err := s.db.Conn(ctx)
@@ -125,11 +93,7 @@ func (s *AuthServiceServer) CreateAccount(ctx context.Context, req *v1.CreateReq
 	if err != nil {
 		return nil, status.Error(codes.Unknown, "failed to insert into members-> "+err.Error())
 	}
-	_ , err = res.LastInsertId()
-	if err != nil {
-		return nil, status.Error(codes.Unknown, "failed to retrieve id for created ToDo-> "+err.Error())
-	}
-	res , err = c.ExecContext(ctx, "INSERT INTO logs(`action`, `reminder`, `user`) VALUES(? , ? , ? )", "CREATE", reminder , username )
+	res , err = c.ExecContext(ctx, "INSERT INTO logs(`action`, `reminder`, `user`) VALUES(? , ? , ? )", "CREATE" , reminder , username )
 	if err != nil {
 		return nil, status.Error(codes.Unknown, "failed to insert into logs-> "+err.Error())
 	}
@@ -140,21 +104,89 @@ func (s *AuthServiceServer) CreateAccount(ctx context.Context, req *v1.CreateReq
 	return &v1.CreateResponse{
 		Api: apiVersion,
 		Success: true,
-		Error: "None",
+		Error: "El usuario fue exitosamente creado" + username,
 		}, nil
 }
 
 //EraseAccount an user from the database
 func (s *AuthServiceServer) EraseAccount(ctx context.Context, req *v1.EraseAccountRequest) (*v1.EraseAccountResponse, error) {
-	return &v1.EraseAccountResponse{}, nil
+	if err := s.checkAPI(req.Api); err != nil {
+		return nil, err
+	}
+
+	c, err := s.connect(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	username := req.Data.GetEmail()
+	
+	res, err := c.ExecContext(ctx , "DELETE FROM members WHERE username = ?", username)
+
+	if err!= nil {
+		return nil, status.Error(codes.Unknown, "failed to delete from members-> "+err.Error())
+	}
+
+	if num , err := res.RowsAffected() ; err == nil{
+		if num < 1 {
+			return nil, status.Error(codes.Unknown, "No Matches usernames"+err.Error())
+		}
+	}
+	_ , err = res.LastInsertId()
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "failed to retrieve id for created logs-> "+err.Error())
+	}
+	
+	return &v1.EraseAccountResponse{
+		Api: apiVersion,
+		Success: true,
+		Error: "el usuario fue correctamente borrado" + username ,
+	}, nil
 }
 
 //LoginAccount an account in the server
 func (s *AuthServiceServer) LoginAccount(ctx context.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
-	return &v1.LoginResponse{}, nil
+	if err := s.checkAPI(req.Api); err != nil {
+		return nil, err
+	}
+
+	c, err := s.connect(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	var realPassword string
+	username , password := req.Data.GetEmail() , req.Data.GetPassword()
+	
+	err = c.QueryRowContext(ctx, "SELECT password FROM members WHERE username = ?", username).Scan(&realPassword)
+
+	switch{
+	case err == sql.ErrNoRows:
+		return nil, status.Error(codes.Unknown, "No matched username "+ err.Error())
+	case err != nil:
+		return nil , status.Error(codes.Unknown, "Error viendo la data"+ err.Error())
+	default:
+		if password != realPassword{
+			return nil , status.Error(codes.Unknown, "Not correct password" + password + "  "+ realPassword )
+		}
+	}
+
+	defer c.Close()
+	return &v1.LoginResponse{
+		Api: apiVersion,
+		Success: true,
+		Error: "el usuario fue correctamente logeado " + username + "   "+ password,
+	}, nil
 }
 
 //ChangePassword the password from a user
 func (s *AuthServiceServer) ChangePassword(ctx context.Context, req *v1.ChangePasswordRequest) (*v1.ChangePasswordResponse, error) {
+	if err := s.checkAPI(req.Api); err != nil {
+		return nil, err
+	}
+
 	return &v1.ChangePasswordResponse{}, nil
 }
+
